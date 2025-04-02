@@ -1,16 +1,38 @@
-from Crypto.Cipher import DES, PKCS1_OAEP
-from Crypto.PublicKey import RSA
+def keylogger():
+    log = []
+    try:
+        print("Натискайте клавіші, для виходу натисніть Ctrl+C")
+        while True:
+            key = input("Натисніть клавішу: ")
+            log.append(key)
+            print("Збережено: ", key)
+    except KeyboardInterrupt:
+        print("Лог клавіш:", ''.join(log))
 
-# Генерація ключа RSA
-key = RSA.generate(2048)
-private_key = key.export_key()
-public_key = key.publickey().export_key()
+def embed_lsb(image_path, message):
+    with open(image_path, 'rb') as file:
+        data = bytearray(file.read())
+    binary_message = ''.join(format(ord(c), '08b') for c in message) + '11111111'
+    for i in range(len(binary_message)):
+        data[54 + i] = (data[54 + i] & ~1) | int(binary_message[i])
+    with open('stego_image.bmp', 'wb') as file:
+        file.write(data)
 
-# Шифрування DES
-cipher = DES.new(b'8bytekey', DES.MODE_ECB)
-encrypted = cipher.encrypt(b'Hello World!   ')
+def main():
+    print("Виберіть дію:")
+    print("1 - Клавіатурний шпигун")
+    print("2 - Стеганографія")
+    choice = input("Ваш вибір: ")
 
-# Дешифрування RSA
-cipher_rsa = PKCS1_OAEP.new(RSA.import_key(private_key))
-decrypted = cipher_rsa.decrypt(encrypted)
-print(decrypted)
+    if choice == '1':
+        keylogger()
+    elif choice == '2':
+        image_path = input("Введіть шлях до зображення (.bmp): ")
+        message = input("Введіть повідомлення для приховування: ")
+        embed_lsb(image_path, message)
+        print("Повідомлення вбудовано в зображення.")
+    else:
+        print("Невірний вибір!")
+
+if __name__ == "__main__":
+    main()
